@@ -20,13 +20,11 @@ export async function getPublicationTasksToPublish() {
     // are linked to the "verzendlijsten" publication channel
     // the linked publication-event has no "ebucore:publicationEndDateTime" yet
     const notStartedStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/not-started';
-    //  const verzendlijstenPubChannel = 'http://themis.vlaanderen.be/id/publicatiekanaal/c184f026-feaa-4899-ba06-fd3a03df599c';
-    // TODO: CHECK if uri is correct
-    const verzendlijstenPubChannel = 'https://data.vlaanderen.be/id/publicatiekanaal/c184f026-feaa-4899-ba06-fd3a03df599c';
+    const verzendlijstenPubChannel = 'http://themis.vlaanderen.be/id/publicatiekanaal/c184f026-feaa-4899-ba06-fd3a03df599c';
 
     const queryResult = await query(`
     ${PREFIXES}
-    SELECT ?publicationTask ?status ?pressRelease ?title  ?graph
+    SELECT ?publicationTask ?status ?pressRelease ?title  ?graph ?attachments ?htmlContent ?contacts ?contactLists ?creator
     WHERE {
             GRAPH ?graph {
                 ?publicationTask   a                           ext:PublicationTask;
@@ -35,9 +33,14 @@ export async function getPublicationTasksToPublish() {
                 
                 ?pubEvent          prov:generated              ?publicationTask.
                 ?pressRelease      ebucore:isScheduledOn       ?pubEvent;
+                                   nie:htmlContent             ?htmlContent;
+                                   dct:creator                 ?creator;
                                    nie:title                   ?title.
-            
-                OPTIONAL{?pubEvent ebucore:publicationEndDateTime    ?end} 
+                
+                OPTIONAL{?pubEvent      ext:contacts                      ?contacts}
+                OPTIONAL{?pubEvent      ext:contactLists                  ?contactLists}
+                OPTIONAL{?pressRelease  nie:hasPart                       ?attachments}
+                OPTIONAL{?pubEvent      ebucore:publicationEndDateTime    ?end}
                 FILTER (!bound(?end))
             }
     }
@@ -57,11 +60,16 @@ export async function initializePublications(publicationTasks) {
         await query(`
         ${PREFIXES}
         
+         DELETE DATA {
+           GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
+                ${sparqlEscapeUri(pubTask.publicationTask.value)}       adms:status     ?oldStatus ;
+                                                                        dct:modified     ?oldDate .
+           }
+        }
         INSERT DATA {
            GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
                 ${sparqlEscapeUri(pubTask.publicationTask.value)}       adms:status     ${sparqlEscapeUri(ongoingStatus)} ;
                                                                         dct:modified     ${sparqlEscapeDateTime(now)} .
-                
            }
         }
         
@@ -78,12 +86,16 @@ export async function finalizePublications(pubTask) {
     const finishedStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/success';
     return await query(`
         ${PREFIXES}
-        
+        DELETE DATA {
+           GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
+                ${sparqlEscapeUri(pubTask.publicationTask.value)}       adms:status     ?oldStatus ;
+                                                                        dct:modified     ?oldDate .    
+           }
+        }
         INSERT DATA {
            GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
                 ${sparqlEscapeUri(pubTask.publicationTask.value)}       adms:status     ${sparqlEscapeUri(finishedStatus)} ;
-                                                                        dct:modified     ${sparqlEscapeDateTime(now)} .
-                
+                                                                        dct:modified     ${sparqlEscapeDateTime(now)} .    
            }
         }
         
@@ -94,6 +106,11 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
     // The HTML gets stored via nie:htmlContent to the publication task
     const queryResult = await query(`
     ${PREFIXES}
+    DELETE DATA {
+       GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
+            ${sparqlEscapeUri(pubTask.publicationTask.value)}        nie:htmlContent 	?oldData .
+       }
+    }
     INSERT DATA {
        GRAPH ${sparqlEscapeUri(pubTask.graph.value)} {
             ${sparqlEscapeUri(pubTask.publicationTask.value)}        nie:htmlContent 	${sparqlEscapeString(html)} .
@@ -112,6 +129,7 @@ export async function pushEmailToOutbox(pubTask, html) {
 
     for(let batch of recipientBatches){
         const uuid = uuid();
+        const attachmentsQuery = generateAttachmentsQuery(pubTask);
         await query(`
             ${PREFIXES}
             
@@ -121,21 +139,28 @@ export async function pushEmailToOutbox(pubTask, html) {
                     mu:uuid ${uuid} ;
                     nmo:emailBcc ${batch};
                     nmo:messageFrom ${EMAIL_FROM};
-                    nmo:messageSubject "Persbericht vlaamse overheid: ${pubTask.title.value}";
+                    nmo:messageSubject "${pubTask.title.value}";
                     nmo:htmlMessageContent ${sparqlEscapeString(html)};
                     nmo:sentDate ${sparqlEscapeDateTime(now)};
+                    ${attachmentsQuery}
                     nmo:isPartOf ${sparqlEscapeUri(outbox)} .
               }
             }
         `);
     }
 
-    // TODO: add attachments
-    // nmo:hasAttachment <http://mu.semte.ch/services/file-service/files/602fa6c6424d81000d000002> ;
-    // nmo:hasAttachment <http://mu.semte.ch/services/file-service/files/602fa6c6424d81000d000000> .
 }
 
 function createRecipientBatches(pubTask){
     // TODO: create batches from recipient email addr
     return [];
+}
+
+function generateAttachmentsQuery(pubTask){
+    // nmo:hasAttachment <http://mu.semte.ch/services/file-service/files/602fa6c6424d81000d000002> ;
+    // nmo:hasAttachment <http://mu.semte.ch/services/file-service/files/602fa6c6424d81000d000000> .
+
+    let query = '';
+    // TODO: create attachments
+    return query;
 }
