@@ -8,5 +8,7 @@ export function createPressReleaseHtml(publicationTask) {
     // Create email generator
     const template = Handlebars.compile(source);
 
-    return template({title: publicationTask.title.value});
+    const {title, htmlContent} = publicationTask;
+    // generate and return html with variables
+    return template({title, htmlContent});
 }
