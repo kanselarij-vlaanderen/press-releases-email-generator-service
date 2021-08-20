@@ -68,20 +68,24 @@ export async function initializePublications(publicationTasks) {
         
         
         DELETE {
-                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?s ;
-                                                                  dct:modified     ?m .
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?s;
+                                                                  dct:modified     ?m.
+            }
         }
         INSERT {
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;
-                                                                  adms:status     ${sparqlEscapeUri(ongoingStatus)} ;
-                                                                  dct:modified     ${sparqlEscapeDateTime(now)} .
+                                                                  adms:status     ${sparqlEscapeUri(ongoingStatus)};
+                                                                  dct:modified     ${sparqlEscapeDateTime(now)}.
+            }
         }
         WHERE {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;
-                                                                  adms:status     ?s ;
-                                                                  dct:modified     ?m .
-          }
+                                                                  adms:status     ?s;
+                                                                  dct:modified     ?m.
+            }
         }
         
         `);
@@ -118,14 +122,17 @@ export async function finalizePublications(pubTask) {
 
 export async function saveHtmlContentToPublicationTask(pubTask, html) {
     // The HTML gets stored via nie:htmlContent to the publication task
-    console.log(html);
-    return await query(`
+    await query(`
     ${PREFIXES}
     DELETE {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData.
+        GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData 
+        }
     }
     INSERT DATA {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString(html)} .
+        GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString("Hello")}.
+        }
     } 
     WHERE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
