@@ -1,5 +1,5 @@
-import { sparqlEscapeString, uuid, sparqlEscapeDateTime, sparqlEscapeUri } from 'mu';
-import { querySudo as query } from '@lblod/mu-auth-sudo';
+import { sparqlEscapeString, uuid as generateUuid, sparqlEscapeDateTime, sparqlEscapeUri } from 'mu';
+import { querySudo as query, updateSudo as update } from '@lblod/mu-auth-sudo';
 import { BATCH_SIZE, EMAIL_FROM, EMAIL_TO } from '../environment';
 import { mapBindingValue, splitArrayIntoBatches } from '../helpers/generic-helpers';
 
@@ -63,7 +63,7 @@ export async function initializePublications(publicationTasks) {
     const now = new Date();
     const ongoingStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/ongoing';
     for (let pubTask of publicationTasks) {
-        await query(`
+        await update(`
         ${PREFIXES}
         
         
@@ -99,7 +99,7 @@ export async function finalizePublications(pubTask) {
 
     const now = new Date();
     const finishedStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/success';
-    return await query(`
+    return await update(`
         ${PREFIXES}
         DELETE {
             ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
@@ -122,7 +122,7 @@ export async function finalizePublications(pubTask) {
 
 export async function saveHtmlContentToPublicationTask(pubTask, html) {
     // The HTML gets stored via nie:htmlContent to the publication task
-    await query(`
+    await update(`
     ${PREFIXES}
     DELETE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
@@ -150,7 +150,7 @@ export async function pushEmailToOutbox(pubTask, html) {
     const attachmentsQuery = await generateAttachmentsQuery(pubTask);
 
     for (let batch of recipientBatches) {
-        const uuid = uuid();
+        const uuid = generateUuid();
         await query(`
                 ${PREFIXES}
 
