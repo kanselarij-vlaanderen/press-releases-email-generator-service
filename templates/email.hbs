@@ -1,17 +1,36 @@
 <html lang="nl-BE">
-	<body>
-	<header>
-		<p>Persbericht door: {{creatorName}}</p>
-	</header>
+<head>
+	<style>
 
-	<main>
-		<h1 class="press-release-title">{{title}}</h1>
-		<div class="press-release-content">{{htmlContent}}</div>
-	</main>
+	</style>
+</head>
+<body>
+<header>
+	<h3>Persbericht {{creatorName}}</h3>
+	<hr>
+</header>
 
-	<footer>
-		<h2 class="sources-title">Bronnen</h2>
-	</footer>
-	</body>
+<main>
+	<h1 class="press-release__title">{{title}}</h1>
+	<div class="press-release__content">{{htmlContent}}</div>
+</main>
+
+<footer>
+	<p>Wilt u geen e-mails meer van ons ontvangen? Jammer! <a href="#">Klik dan hier om u af te melden</a></p>
+	<hr>
+	{{#each sources}}
+		<p>{{this.fullName}}, {{this.function}}</p>
+		{{#if (isdefined this.telephone)}}
+			<p><a href="{{this.telephone}}">{{this.telephone}}</a></p>
+		{{/if}}
+		{{#if (isdefined this.mobile)}}
+			<p><a href="{{this.mobile}}">{{this.mobile}}</a></p>
+		{{/if}}
+		{{#if (isdefined this.email)}}
+			<p><a href="{{this.email}}">{{this.email}}</a></p>
+		{{/if}}
+	{{/each}}
+</footer>
+</body>
 </html>
 

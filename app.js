@@ -4,27 +4,32 @@ import {
     getPublicationTasksToPublish,
     saveHtmlContentToPublicationTask,
     pushEmailToOutbox,
+    getPressReleaseSources,
     finalizePublications,
     initializePublications,
 } from './sparql-queries/sparql-queries';
 import { createPressReleaseHtml } from './helpers/email-helpers';
 
 app.post('/delta', async (req, res, next) => {
+    let sent = false; // fix for trying to respond with status 500 after 202 is sent
     try {
         const publicationTasksToPublish = await getPublicationTasksToPublish();
-        console.log(publicationTasksToPublish);
-        // await initializePublications(publicationTasksToPublish);
+        await initializePublications(publicationTasksToPublish);
         res.sendStatus(202);
-
+        sent = true;
         for (let pubTask of publicationTasksToPublish) {
-            let html = createPressReleaseHtml(pubTask);
-            console.log(html);
-            // await saveHtmlContentToPublicationTask(pubTask, html);
-            await pushEmailToOutbox(pubTask, html);
+            const sources = await getPressReleaseSources(pubTask);
+            let html = createPressReleaseHtml(pubTask, sources);
+            await saveHtmlContentToPublicationTask(pubTask, html);
+            // await pushEmailToOutbox(pubTask, html);
             // await finalizePublications(pubTask);
         }
     } catch (err) {
-        return handleGenericError(err, next);
+        if (!sent) {
+            return handleGenericError(err, next);
+        } else {
+            console.error(err);
+        }
     }
 });
 
