@@ -14,7 +14,7 @@ app.post('/delta', async (req, res, next) => {
     let sent = false; // fix for trying to respond with status 500 after 202 is sent
     try {
         const publicationTasksToPublish = await getPublicationTasksToPublish();
-        console.log(`Found ${publicationTasksToPublish.length} publication tasks with emails to be generated and sent.`)
+        console.log(`Found ${publicationTasksToPublish.length} publication tasks with emails to be generated and sent.`);
         await initializePublications(publicationTasksToPublish);
         res.sendStatus(202);
         sent = true;
@@ -23,8 +23,8 @@ app.post('/delta', async (req, res, next) => {
             const html = createPressReleaseHtml(pubTask, sources);
 
             await saveHtmlContentToPublicationTask(pubTask, html);
-            // await pushEmailToOutbox(pubTask, html);
-            // await finalizePublications(pubTask);
+            await pushEmailToOutbox(pubTask, html);
+            await finalizePublications(pubTask);
         }
     } catch (err) {
         if (!sent) {

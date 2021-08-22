@@ -105,7 +105,7 @@ export async function finalizePublications(pubTask) {
             ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
                                                               dct:modified     ?oldDate.
         }
-        INSERT DATA {
+        INSERT {
             ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(finishedStatus)};
                                                               dct:modified     ${sparqlEscapeDateTime(now)}.    
         }
@@ -126,12 +126,12 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
     ${PREFIXES}
     DELETE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData 
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData.
         }
     }
-    INSERT DATA {
+    INSERT {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString("Hello")}.
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString(html)}.
         }
     } 
     WHERE {

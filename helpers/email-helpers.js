@@ -15,3 +15,8 @@ export function createPressReleaseHtml(publicationTask, sources) {
     // generate and return html with variables
     return template({title, htmlContent, sources});
 }
+
+
+
+
+
