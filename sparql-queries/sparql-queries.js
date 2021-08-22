@@ -44,7 +44,7 @@ export async function getPublicationTasksToPublish() {
                                         dct:creator                       ?creator;
                                         nie:title                         ?title.
                                    
-                OPTIONAL{?creator       vcard:fn                          ?creatorName}
+                ?creator                vcard:fn                          ?creatorName.
                 
                 OPTIONAL{?pubEvent      ebucore:publicationEndDateTime    ?end}
                 FILTER (!bound(?end))
@@ -173,7 +173,7 @@ export async function pushEmailToOutbox(pubTask, html) {
 
 }
 
-async function createRecipientBatches(pubTask) {
+export async function createRecipientBatches(pubTask) {
 
     const q = await query(`
      ${PREFIXES}
