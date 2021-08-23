@@ -44,7 +44,7 @@ export async function getPublicationTasksToPublish() {
                                         dct:creator                       ?creator;
                                         nie:title                         ?title.
                                    
-                ?creator                vcard:fn                          ?creatorName.
+                OPTIONAL{ ?creator      vcard:fn                          ?creatorName}
                 
                 OPTIONAL{?pubEvent      ebucore:publicationEndDateTime    ?end}
                 FILTER (!bound(?end))
@@ -159,7 +159,7 @@ export async function pushEmailToOutbox(pubTask, html) {
                     <http://themis.vlaanderen.be/id/emails/${uuid}> a nmo:Email;
                         mu:uuid ${uuid} ;
                         nmo:emailTo ${EMAIL_TO};
-                        nmo:emailBcc ${batch};
+                        nmo:emailBcc ${batch.toString()};
                         nmo:messageFrom ${EMAIL_FROM};
                         nmo:messageSubject "${pubTask.title}";
                         nmo:htmlMessageContent ${sparqlEscapeString(html)};

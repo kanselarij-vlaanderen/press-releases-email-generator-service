@@ -8,6 +8,7 @@
   },
   "author": "Michael <michael.vervloet@ordina.be> (https://www.ordina.be)",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "@lblod/mu-auth-sudo": "^0.3.2",
     "handlebars": "^4.7.7"
