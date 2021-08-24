@@ -172,9 +172,9 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
 
 export async function pushEmailToOutbox(pubTask, html, attachments) {
     const now = new Date();
-    let recipientBatches = await createRecipientBatches(pubTask);
-    recipientBatches = [['michael.vervloet@test.be', 'edo@test.com']];
-    let attachmentsQuery = generateAttachmentsQuery(attachments);
+    const recipientBatches = await createRecipientBatches(pubTask);
+    const attachmentsQuery = generateAttachmentsQuery(attachments);
+
     for (let batch of recipientBatches) {
         const batchQuery = generateEmailToQueryFromBatch(batch);
         const uuid = generateUuid();
