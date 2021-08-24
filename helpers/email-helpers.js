@@ -1,5 +1,6 @@
 import Handlebars from 'handlebars';
 import path from 'path';
+import { minify } from 'html-minifier';
 import { readFileSync } from 'fs';
 
 export function createPressReleaseHtml(publicationTask, sources) {
@@ -13,9 +14,14 @@ export function createPressReleaseHtml(publicationTask, sources) {
 
     const {title, htmlContent, creatorName} = publicationTask;
     // generate and return html with variables
-    return template({title, htmlContent, creatorName, sources});
+    const html = template({title, htmlContent, creatorName, sources});
+    // return minified html
+    return minify(html, {
+        removeComments: true,
+        collapseWhitespace: true,
+        removeEmptyAttributes: true,
+    });
 }
-
 
 
 

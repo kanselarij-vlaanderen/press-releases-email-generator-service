@@ -40,9 +40,10 @@ services:
 
 | Key | type | default | description |
 |-----|------|---------|-------------|
-| EMAIL_TO | string | 'noreply@pers-berichten.vlaanderen.be' | mailTo recipient of the email |
-| EMAIL_FROM | string | 'noreply@pers-berichten.vlaanderen.be' | sender of the email |
+| EMAIL_TO | string | 'noreply@vlivia.vlaanderen.be' | mailTo recipient of the email |
+| EMAIL_FROM | string | 'noreply@vlivia.vlaanderen.be' | sender of the email |
 | BATCH_SIZE | number | 50 | when an email has more than BATCH_SIZE recipients, it gets split into <amount of recipients/BATCH_SIZE> different emails to be sent to avoid spam listings |
+| OUTBOX_URI | string | 'http://themis.vlaanderen.be/id/mail-folders/71f0e467-36ef-42cd-8764-5f7c5438ebcf' | outbox uri |
 
 
 

@@ -1,9 +1,13 @@
 import { sparqlEscapeString, uuid as generateUuid, sparqlEscapeDateTime, sparqlEscapeUri } from 'mu';
 import { querySudo as query, updateSudo as update } from '@lblod/mu-auth-sudo';
-import { BATCH_SIZE, EMAIL_FROM, EMAIL_TO } from '../environment';
+import { BATCH_SIZE, EMAIL_FROM, EMAIL_TO, OUTBOX_URI } from '../environment';
 import { mapBindingValue, splitArrayIntoBatches } from '../helpers/generic-helpers';
 
 const VERZENDLIJSTEN_PUBLICATION_CHANNEL = 'http://themis.vlaanderen.be/id/publicatiekanaal/c184f026-feaa-4899-ba06-fd3a03df599c';
+const NOT_STARTED_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/not-started';
+const ONGOING_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/ongoing';
+const FINISHED_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/success';
+const FAILED_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/failed';
 
 const PREFIXES = `
     PREFIX mu: ${sparqlEscapeUri('http://mu.semte.ch/vocabularies/core/')}
@@ -26,15 +30,13 @@ export async function getPublicationTasksToPublish() {
     // have "adms:status" set to "http://themis.vlaanderen.be/id/concept/publication-task-status/not-started"
     // are linked to the "verzendlijsten" publication channel
     // the linked publication-event has no "ebucore:publicationEndDateTime" yet
-    const notStartedStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/not-started';
-
     const queryResult = await query(`
     ${PREFIXES}
     SELECT ?publicationTask ?status ?pressRelease ?title  ?graph ?htmlContent ?creatorName ?pubEvent
     WHERE {
             GRAPH ?graph {
                 ?publicationTask        a                                 ext:PublicationTask;
-                                        adms:status                       ${sparqlEscapeUri(notStartedStatus)};
+                                        adms:status                       ${sparqlEscapeUri(NOT_STARTED_STATUS)};
                                         ext:publicationChannel            ${sparqlEscapeUri(VERZENDLIJSTEN_PUBLICATION_CHANNEL)}.
                 
                 ?pubEvent               prov:generated                    ?publicationTask.
@@ -44,10 +46,9 @@ export async function getPublicationTasksToPublish() {
                                         dct:creator                       ?creator;
                                         nie:title                         ?title.
                                    
-                OPTIONAL{ ?creator      vcard:fn                          ?creatorName}
+                OPTIONAL{ ?creator      vcard:fn                          ?creatorName }
                 
-                OPTIONAL{?pubEvent      ebucore:publicationEndDateTime    ?end}
-                FILTER (!bound(?end))
+                FILTER NOT EXISTS{ ?pubEvent      ebucore:publicationEndDateTime    ?end }
             }
     }
     `);
@@ -61,7 +62,6 @@ export async function initializePublications(publicationTasks) {
     // and the modification date to the current time.
 
     const now = new Date();
-    const ongoingStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/ongoing';
     for (let pubTask of publicationTasks) {
         await update(`
         ${PREFIXES}
@@ -76,7 +76,7 @@ export async function initializePublications(publicationTasks) {
         INSERT {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;
-                                                                  adms:status     ${sparqlEscapeUri(ongoingStatus)};
+                                                                  adms:status     ${sparqlEscapeUri(ONGOING_STATUS)};
                                                                   dct:modified     ${sparqlEscapeDateTime(now)}.
             }
         }
@@ -98,7 +98,6 @@ export async function finalizePublications(pubTask) {
     // and the modification date to the current time.
 
     const now = new Date();
-    const finishedStatus = 'http://themis.vlaanderen.be/id/concept/publication-task-status/success';
     return await update(`
         ${PREFIXES}
         DELETE {
@@ -106,7 +105,30 @@ export async function finalizePublications(pubTask) {
                                                               dct:modified     ?oldDate.
         }
         INSERT {
-            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(finishedStatus)};
+            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FINISHED_STATUS)};
+                                                              dct:modified     ${sparqlEscapeDateTime(now)}.    
+        }
+        WHERE {
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;      
+                                                                  adms:status     ?oldStatus;
+                                                                  dct:modified     ?oldDate .
+            }
+        }
+        
+        `);
+}
+
+export async function failPublications(pubTask) {
+    const now = new Date();
+    return await update(`
+        ${PREFIXES}
+        DELETE {
+            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
+                                                              dct:modified     ?oldDate.
+        }
+        INSERT {
+            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FAILED_STATUS)};
                                                               dct:modified     ${sparqlEscapeDateTime(now)}.    
         }
         WHERE {
@@ -121,7 +143,7 @@ export async function finalizePublications(pubTask) {
 }
 
 export async function saveHtmlContentToPublicationTask(pubTask, html) {
-    // The HTML gets stored via nie:htmlContent to the publication task
+    // Delete old html if it already exists
     await update(`
     ${PREFIXES}
     DELETE {
@@ -129,11 +151,6 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
             ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData.
         }
     }
-    INSERT {
-        GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString(html)}.
-        }
-    } 
     WHERE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
             ${sparqlEscapeUri(pubTask.publicationTask)}        a                ext:PublicationTask;
@@ -141,36 +158,45 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
         }
     }
     `);
+
+    // The new HTML gets stored via nie:htmlContent to the publication task
+    await update(`
+    ${PREFIXES}
+    INSERT DATA {
+        GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString(html)}.
+        }
+    }
+    `);
 }
 
-export async function pushEmailToOutbox(pubTask, html) {
+export async function pushEmailToOutbox(pubTask, html, attachments) {
     const now = new Date();
-    const outbox = 'http://themis.vlaanderen.be/id/mail-folders/71f0e467-36ef-42cd-8764-5f7c5438ebcf';
-    const recipientBatches = await createRecipientBatches(pubTask);
-    const attachmentsQuery = await generateAttachmentsQuery(pubTask);
-
+    let recipientBatches = await createRecipientBatches(pubTask);
+    recipientBatches = [['michael.vervloet@test.be', 'edo@test.com']];
+    let attachmentsQuery = generateAttachmentsQuery(attachments);
     for (let batch of recipientBatches) {
+        const batchQuery = generateEmailToQueryFromBatch(batch);
         const uuid = generateUuid();
-        await query(`
-                ${PREFIXES}
+        await update(`
+                 ${PREFIXES}
 
-                INSERT DATA {
-                  GRAPH <http://mu.semte.ch/graphs/system/email> {
-                    <http://themis.vlaanderen.be/id/emails/${uuid}> a nmo:Email;
-                        mu:uuid ${uuid} ;
-                        nmo:emailTo ${EMAIL_TO};
-                        nmo:emailBcc ${batch.toString()};
-                        nmo:messageFrom ${EMAIL_FROM};
-                        nmo:messageSubject "${pubTask.title}";
-                        nmo:htmlMessageContent ${sparqlEscapeString(html)};
-                        nmo:sentDate ${sparqlEscapeDateTime(now)};
-                        ${attachmentsQuery}
-                        nmo:isPartOf ${sparqlEscapeUri(outbox)} .
-                  }
-                }
-            `);
+                 INSERT DATA {
+                   GRAPH <http://mu.semte.ch/graphs/system/email> {
+                     <http://themis.vlaanderen.be/id/emails/${uuid}> a nmo:Email;
+                         mu:uuid ${sparqlEscapeString(uuid)} ;
+                         nmo:emailTo ${sparqlEscapeString(EMAIL_TO)};
+                         ${batchQuery}
+                         nmo:messageFrom ${sparqlEscapeString(EMAIL_FROM)};
+                         nmo:messageSubject ${sparqlEscapeString(pubTask.title)};
+                         nmo:htmlMessageContent ${sparqlEscapeString(html)};
+                         nmo:sentDate ${sparqlEscapeDateTime(now)};
+                         ${attachmentsQuery}
+                         nmo:isPartOf ${sparqlEscapeUri(OUTBOX_URI)} .
+                   }
+                 }
+             `);
     }
-
 }
 
 export async function createRecipientBatches(pubTask) {
@@ -178,45 +204,36 @@ export async function createRecipientBatches(pubTask) {
     const q = await query(`
      ${PREFIXES}
      
-     SELECT ?contactListItemValue ?contactItemValue
+     SELECT DISTINCT ?value
      WHERE {
          GRAPH ${sparqlEscapeUri(pubTask.graph)} {
              {
                   ?contactList      ext:contactListHasChannelPublicationEvent   ${sparqlEscapeUri(pubTask.pubEvent)};
                                     nco:containsContact                         ?contactListItem.
                   ?contactListItem  vcard:hasEmail                              ?email.
-                  ?email            vcard:hasValue                              ?contactListItemValue. 
+                  ?email            vcard:hasValue                              ?value. 
               } 
               UNION 
               {
                   ?contactItem      ext:contactHasChannelPublicationEvent       ${sparqlEscapeUri(pubTask.pubEvent)};
                                     vcard:hasEmail                              ?email.
-                  ?email            vcard:hasValue                              ?contactItemValue.
+                  ?email            vcard:hasValue                              ?value.
               }
          } 
      }
     `);
 
-    // create array of email values
-    const emails = q.results.bindings.map((item) => {
-        return item.contactListItemValue.value ? item.contactListItemValue.value : item.contactItemValue.value;
-    });
-
-    // create set to make sure the emails are unique
-    const emailSet = new Set(emails);
-    console.log('emails', emails);
-    console.log('emailSet', emailSet);
+    // map array of email values
+    const emails = q.results.bindings.map(mapBindingValue).map(item => item.value);
 
     // split the array into batches and return
-    return splitArrayIntoBatches(emailSet, BATCH_SIZE);
+    return splitArrayIntoBatches(emails, BATCH_SIZE);
 
 }
 
-async function generateAttachmentsQuery(pubTask) {
+export async function getPressReleaseAttachments(pubTask) {
     // example attachment query string
     // nmo:hasAttachment <http://mu.semte.ch/services/file-service/files/602fa6c6424d81000d000000> ;
-
-    let queryString = '';
 
     const attachmentsQuery = await query(`
      ${PREFIXES}
@@ -229,11 +246,7 @@ async function generateAttachmentsQuery(pubTask) {
      }
     `);
 
-    attachmentsQuery.results.bindings.forEach((binding) => {
-        queryString += ` nmo:hasAttachment ${sparqlEscapeUri(binding.attachment.value)} ; \n`;
-    });
-
-    return queryString;
+    return attachmentsQuery.results.bindings.map(mapBindingValue).map((item) => item.attachment);
 }
 
 export async function getPressReleaseSources(pubTask) {
@@ -278,4 +291,28 @@ export async function getPressReleaseSources(pubTask) {
 
     return q.results.bindings.map(mapBindingValue);
 
+}
+
+function generateAttachmentsQuery(attachments) {
+    let attachmentsQuery = '';
+    if (attachments && attachments.length) {
+        attachmentsQuery = `nmo:hasAttachment `;
+        attachments.forEach((attachment) => {
+            attachmentsQuery += ` ${sparqlEscapeUri(attachment)},`;
+        });
+        attachmentsQuery = attachmentsQuery.substring(0, attachmentsQuery.length - 1); // remove last ','
+        attachmentsQuery += ';';
+    }
+    return attachmentsQuery;
+}
+
+function generateEmailToQueryFromBatch(batch) {
+    let batchQuery = '';
+    batchQuery = `nmo:emailBcc `;
+    batch.forEach((email) => {
+        batchQuery += ` ${sparqlEscapeString(email)},`;
+    });
+    batchQuery = batchQuery.substring(0, batchQuery.length - 1); // remove last ','
+    batchQuery += ';';
+    return batchQuery;
 }
