@@ -27,7 +27,7 @@ services:
 ```
 
 and add the following rules to the ``` config/delta/rules.js ```
-```json
+```javascript
 {
     match: {
         predicate: {
@@ -40,7 +40,7 @@ and add the following rules to the ``` config/delta/rules.js ```
         },
     },
     callback: {
-        url: 'http:/press-releases-email-generator/delta', method: 'POST',
+        url: 'http://press-releases-email-generator/delta', method: 'POST',
     },
     options: {
         resourceFormat: 'v0.0.1',
