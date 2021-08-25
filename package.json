@@ -4,12 +4,23 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Michael <michael.vervloet@ordina.be> (https://www.ordina.be)",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "@lblod/mu-auth-sudo": "^0.3.2",
-    "handlebars": "^4.7.7"
+    "handlebars": "^4.7.7",
+    "html-minifier": "^4.0.0"
+  },
+  "devDependencies": {
+    "jest": "^27.0.6"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }
