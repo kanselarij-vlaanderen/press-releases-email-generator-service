@@ -20,12 +20,3 @@ export async function getPressReleaseAttachments(pubTask) {
 
     return attachmentsQuery.results.bindings.map(mapBindingValue).map((item) => item.attachment);
 }
-
-export function generateAttachmentsQuery(attachments) {
-    let attachmentsQuery = '';
-    if (attachments && attachments.length) {
-        const joinedAttachments = attachments.map(att => sparqlEscapeUri(att)).join(', ');
-        attachmentsQuery = `nmo:hasAttachment ${joinedAttachments};`;
-    }
-    return attachmentsQuery;
-}

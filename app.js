@@ -28,15 +28,10 @@ app.post('/delta', async (req, res, next) => {
                 await finalizePublication(pubTask);
             } catch (err) {
                 await failPublication(pubTask);
-                throw err;
             }
         }
     } catch (err) {
-        try {
-            return handleGenericError(err, next);
-        } catch (e) {
-            console.error(err, e);
-        }
+        return handleGenericError(err, next);
     }
 });
 

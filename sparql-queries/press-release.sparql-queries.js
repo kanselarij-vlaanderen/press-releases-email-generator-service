@@ -7,7 +7,7 @@ export async function getPressReleaseSources(pubTask) {
 
     const q = await query(`
         ${PREFIXES}
-    
+
         SELECT ?source ?fullName ?function ?telephone ?mobile ?email ?organization
         WHERE {
             ${sparqlEscapeUri(pubTask.pressRelease)}    a                   fabio:PressRelease;

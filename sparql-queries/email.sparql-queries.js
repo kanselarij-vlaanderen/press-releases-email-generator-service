@@ -1,5 +1,4 @@
 import { sparqlEscapeString, uuid as generateUuid, sparqlEscapeDateTime, sparqlEscapeUri } from 'mu';
-import { generateAttachmentsQuery } from './attachments.sparql-queries';
 import { querySudo as query, updateSudo as update } from '@lblod/mu-auth-sudo';
 import { mapBindingValue, splitArrayIntoBatches } from '../helpers/generic-helpers';
 import { BATCH_SIZE, EMAIL_FROM, EMAIL_TO, OUTBOX_URI } from '../environment';
@@ -27,7 +26,7 @@ export async function pushEmailToOutbox(pubTask, html, attachments) {
                          nmo:htmlMessageContent ${sparqlEscapeString(html)};
                          nmo:sentDate ${sparqlEscapeDateTime(now)};
                          ${attachmentsQuery}
-                         nmo:isPartOf ${sparqlEscapeUri(OUTBOX_URI)} .
+                         nmo:isPartOf ${sparqlEscapeUri(OUTBOX_URI)}.
                    }
                  }
              `);
@@ -69,4 +68,13 @@ export async function createRecipientBatches(pubTask) {
 function generateEmailToQueryFromBatch(batch) {
     const joinedBatch = batch.map(email => sparqlEscapeUri(email)).join(', ');
     return `nmo:emailBcc ${joinedBatch};`;
+}
+
+export function generateAttachmentsQuery(attachments) {
+    let attachmentsQuery = '';
+    if (attachments && attachments.length) {
+        const joinedAttachments = attachments.map(att => sparqlEscapeUri(att)).join(', ');
+        attachmentsQuery = `nmo:hasAttachment ${joinedAttachments};`;
+    }
+    return attachmentsQuery;
 }

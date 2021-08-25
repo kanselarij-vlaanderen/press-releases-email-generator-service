@@ -112,7 +112,7 @@ export async function failPublication(pubTask) {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;
                                                                   adms:status     ?oldStatus;
-                                                                  dct:modified     ?oldDate .
+                                                                  dct:modified     ?oldDate.
             }
         }
         `);
