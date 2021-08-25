@@ -49,7 +49,7 @@ export async function initializePublications(publicationTasks) {
     for (let pubTask of publicationTasks) {
         await update(`
         ${PREFIXES}
- 
+
         DELETE {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?s;
@@ -124,13 +124,13 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
     ${PREFIXES}
     DELETE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	?oldData.
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent  ?oldData.
         }
     }
     WHERE {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
             ${sparqlEscapeUri(pubTask.publicationTask)}        a                ext:PublicationTask;
-                                                               nie:htmlContent 	?oldData.
+                                                               nie:htmlContent  ?oldData.
         }
     }
     `);
@@ -140,7 +140,7 @@ export async function saveHtmlContentToPublicationTask(pubTask, html) {
     ${PREFIXES}
     INSERT DATA {
         GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent 	${sparqlEscapeString(html)}.
+            ${sparqlEscapeUri(pubTask.publicationTask)}        nie:htmlContent  ${sparqlEscapeString(html)}.
         }
     }
     `);

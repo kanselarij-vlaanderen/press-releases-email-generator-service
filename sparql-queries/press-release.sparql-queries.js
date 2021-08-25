@@ -14,7 +14,7 @@ export async function getPressReleaseSources(pubTask) {
                                                         dct:source          ?source.
             ?source                                     a                   ebucore:Contact;
                                                         vcard:fn            ?fullName.
-  
+
             OPTIONAL { ?source                          vcard:role          ?function }
             OPTIONAL{
                 ?organizationURI                        a                   vcard:Organization;

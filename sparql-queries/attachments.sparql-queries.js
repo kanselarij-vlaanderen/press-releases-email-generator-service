@@ -9,7 +9,7 @@ export async function getPressReleaseAttachments(pubTask) {
 
     const attachmentsQuery = await query(`
      ${PREFIXES}
- 
+
      SELECT ?attachment
      WHERE {
          GRAPH ${sparqlEscapeUri(pubTask.graph)} {
