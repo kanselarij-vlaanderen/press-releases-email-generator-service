@@ -4,7 +4,7 @@ import { createPressReleaseHtml } from './helpers/email-helpers';
 import { getPressReleaseAttachments } from './sparql-queries/attachments.sparql-queries';
 import {
     failPublication,
-    finalizePublications,
+    finalizePublication,
     getPublicationTasksToPublish,
     initializePublications,
     saveHtmlContentToPublicationTask,
@@ -25,7 +25,7 @@ app.post('/delta', async (req, res, next) => {
                 const html = createPressReleaseHtml(pubTask, sources);
                 await saveHtmlContentToPublicationTask(pubTask, html);
                 await pushEmailToOutbox(pubTask, html, attachments);
-                await finalizePublications(pubTask);
+                await finalizePublication(pubTask);
             } catch (err) {
                 await failPublication(pubTask);
                 throw err;

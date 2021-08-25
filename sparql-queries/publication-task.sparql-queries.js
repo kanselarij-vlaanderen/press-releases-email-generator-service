@@ -74,11 +74,7 @@ export async function initializePublications(publicationTasks) {
     }
 }
 
-export async function finalizePublications(pubTask) {
-    // for every publication-task the status is changed to:
-    // http://themis.vlaanderen.be/id/concept/publication-task-status/ongoing
-    // and the modification date to the current time.
-
+export async function finalizePublication(pubTask) {
     const now = new Date();
     return await update(`
         ${PREFIXES}
