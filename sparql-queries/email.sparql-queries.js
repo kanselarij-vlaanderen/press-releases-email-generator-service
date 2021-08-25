@@ -70,7 +70,7 @@ function generateEmailToQueryFromBatch(batch) {
     return `nmo:emailBcc ${joinedBatch};`;
 }
 
-export function generateAttachmentsQuery(attachments) {
+function generateAttachmentsQuery(attachments) {
     let attachmentsQuery = '';
     if (attachments && attachments.length) {
         const joinedAttachments = attachments.map(att => sparqlEscapeUri(att)).join(', ');
