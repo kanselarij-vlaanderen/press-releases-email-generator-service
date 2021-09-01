@@ -1,6 +1,8 @@
 import { sparqlEscapeUri } from 'mu';
 
 export const VERZENDLIJSTEN_PUBLICATION_CHANNEL = 'http://themis.vlaanderen.be/id/publicatiekanaal/c184f026-feaa-4899-ba06-fd3a03df599c';
+export const PUBLIC_GRAPH = 'http://mu.semte.ch/graphs/public';
+
 export const NOT_STARTED_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/not-started';
 export const ONGOING_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/ongoing';
 export const FINISHED_STATUS = 'http://themis.vlaanderen.be/id/concept/publication-task-status/success';

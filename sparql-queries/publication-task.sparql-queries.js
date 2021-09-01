@@ -79,12 +79,16 @@ export async function finalizePublication(pubTask) {
     return await update(`
         ${PREFIXES}
         DELETE {
-            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
-                                                              dct:modified     ?oldDate.
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
+                                                                dct:modified     ?oldDate.
+            }
         }
         INSERT {
-            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FINISHED_STATUS)};
-                                                              dct:modified     ${sparqlEscapeDateTime(now)}.
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FINISHED_STATUS)};
+                                                                dct:modified     ${sparqlEscapeDateTime(now)}.
+            }
         }
         WHERE {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
@@ -101,12 +105,16 @@ export async function failPublication(pubTask) {
     return await update(`
         ${PREFIXES}
         DELETE {
-            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
-                                                              dct:modified     ?oldDate.
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ?oldStatus;
+                                                                dct:modified     ?oldDate.
+            }
         }
         INSERT {
-            ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FAILED_STATUS)};
-                                                              dct:modified     ${sparqlEscapeDateTime(now)}.
+            GRAPH ${sparqlEscapeUri(pubTask.graph)} {
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(FAILED_STATUS)};
+                                                                dct:modified     ${sparqlEscapeDateTime(now)}.
+            }
         }
         WHERE {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {

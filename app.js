@@ -28,6 +28,8 @@ app.post('/delta', async (req, res, next) => {
                 await finalizePublication(pubTask);
             } catch (err) {
                 await failPublication(pubTask);
+                console.log(`Something went wrong while processing the publication task.`);
+                console.log(err);
             }
         }
     } catch (err) {
