@@ -3,7 +3,7 @@ import path from 'path';
 import { minify } from 'html-minifier';
 import { readFileSync } from 'fs';
 
-export function createPressReleaseHtml(publicationTask, sources) {
+export function createPressReleaseHtml(content, sources) {
     // Open template file
     const templateSource = readFileSync(path.join(__dirname.replace('helpers', 'templates'), '/email.hbs'), 'utf8');
     Handlebars.registerHelper('isdefined', function (value) {
@@ -12,9 +12,8 @@ export function createPressReleaseHtml(publicationTask, sources) {
     // Create email generator
     const template = Handlebars.compile(templateSource);
 
-    const {title, htmlContent, creatorName} = publicationTask;
     // generate and return html with variables
-    const html = template({title, htmlContent, creatorName, sources});
+    const html = template({...content, sources});
     // return minified html
     return minify(html, {
         removeComments: true,

@@ -11,6 +11,8 @@ import {
 } from './sparql-queries/publication-task.sparql-queries';
 import { getPressReleaseSources } from './sparql-queries/press-release.sparql-queries';
 import { pushEmailToOutbox } from './sparql-queries/email.sparql-queries';
+import { getPressReleaseById, getRelatedSources } from './sparql-queries/press-release-template.sparql-queries';
+import { COLLABORATOR_GRAPH_PREFIX } from './sparql-queries/sparql-constants';
 
 app.post('/delta', async (req, res, next) => {
     try {
@@ -32,6 +34,22 @@ app.post('/delta', async (req, res, next) => {
                 console.log(err);
             }
         }
+    } catch (err) {
+        return handleGenericError(err, next);
+    }
+});
+
+app.get('/press-releases/:id/preview', async (req, res, next) => {
+    try {
+        const pressReleaseId = req.params.id;
+        const pressRelease = await getPressReleaseById(pressReleaseId);
+        pressRelease.graph = `${COLLABORATOR_GRAPH_PREFIX}${pressReleaseId}`;
+        if (!pressRelease) {
+            return res.sendStatus(404);
+        }
+        const sources = await getPressReleaseSources(pressRelease);
+        const html = createPressReleaseHtml(pressRelease, sources);
+        return res.status(200).send(html);
     } catch (err) {
         return handleGenericError(err, next);
     }

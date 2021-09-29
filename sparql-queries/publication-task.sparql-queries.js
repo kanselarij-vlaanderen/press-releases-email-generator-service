@@ -1,5 +1,5 @@
 import { sparqlEscapeString, sparqlEscapeDateTime, sparqlEscapeUri } from 'mu';
-import { querySudo as query, updateSudo as update } from '@lblod/mu-auth-sudo';
+import { querySudo, updateSudo as update } from '@lblod/mu-auth-sudo';
 import { mapBindingValue } from '../helpers/generic-helpers';
 import {
     FAILED_STATUS, FINISHED_STATUS,
@@ -14,7 +14,7 @@ export async function getPublicationTasksToPublish() {
     // have "adms:status" set to "http://themis.vlaanderen.be/id/concept/publication-task-status/not-started"
     // are linked to the "verzendlijsten" publication channel
     // the linked publication-event has no "ebucore:publicationEndDateTime" yet
-    const queryResult = await query(`
+    const queryResult = await querySudo(`
     ${PREFIXES}
     SELECT ?publicationTask ?status ?pressRelease ?title  ?graph ?htmlContent ?creatorName ?pubEvent
     WHERE {

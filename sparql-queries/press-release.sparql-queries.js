@@ -4,10 +4,11 @@ import { sparqlEscapeUri } from 'mu';
 import { PREFIXES, VERZENDLIJSTEN_PUBLICATION_CHANNEL, PUBLIC_GRAPH } from './sparql-constants';
 
 export async function getPressReleaseSources(pubTask) {
+    console.log(pubTask)
 
     const q = await query(`
         ${PREFIXES}
-
+ 
         SELECT ?source ?fullName ?function ?telephone ?mobile ?email ?organization WHERE {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
                 ${sparqlEscapeUri(pubTask.pressRelease)}    a                   fabio:PressRelease;
