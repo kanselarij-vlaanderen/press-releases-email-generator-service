@@ -1,41 +1,25 @@
 import { app, errorHandler } from 'mu';
-import { handleGenericError } from './helpers/generic-helpers';
-import { createPressReleaseHtml } from './helpers/email-helpers';
-import { getPressReleaseAttachments } from './sparql-queries/attachments.sparql-queries';
-import {
-    failPublication,
-    finalizePublication,
-    getPublicationTasksToPublish,
-    initializePublications,
-    saveHtmlContentToPublicationTask,
-} from './sparql-queries/publication-task.sparql-queries';
-import { getPressReleaseSources } from './sparql-queries/press-release.sparql-queries';
-import { pushEmailToOutbox } from './sparql-queries/email.sparql-queries';
+import { getNotStartedPublicationTasks, TASK_ONGOING_STATUS } from './lib/publication-task';
 
-app.post('/delta', async (req, res, next) => {
-    try {
-        const publicationTasksToPublish = await getPublicationTasksToPublish();
-        console.log(`Found ${publicationTasksToPublish.length} publication tasks with emails to be generated and sent.`);
-        await initializePublications(publicationTasksToPublish);
-        res.sendStatus(202);
-        for (let pubTask of publicationTasksToPublish) {
-            try {
-                const sources = await getPressReleaseSources(pubTask);
-                const attachments = await getPressReleaseAttachments(pubTask);
-                const html = createPressReleaseHtml(pubTask, sources);
-                await saveHtmlContentToPublicationTask(pubTask, html);
-                await pushEmailToOutbox(pubTask, html, attachments);
-                await finalizePublication(pubTask);
-            } catch (err) {
-                await failPublication(pubTask);
-                console.log(`Something went wrong while processing the publication task.`);
-                console.log(err);
-            }
-        }
-    } catch (err) {
-        return handleGenericError(err, next);
+app.post('/delta', async function (req, res, next) {
+    console.log("Processing deltas for email...");
+
+    const publicationTasks = await getNotStartedPublicationTasks();
+
+    if (publicationTasks) {
+      console.log(`Found ${publicationTasks.length} publication tasks to be processed.`);
+      for (const publicationTask of publicationTasks) {
+        await publicationTask.persistStatus(TASK_ONGOING_STATUS);
+      };
+      res.sendStatus(202);
+      for (const publicationTask of publicationTasks) {
+        await publicationTask.process();
+      };
+    } else {
+      console.log(`No publication tasks found to be processed.`);
+      return res.status(200).end();
     }
-});
+  });
 
 // use mu errorHandler middleware.
 app.use(errorHandler);

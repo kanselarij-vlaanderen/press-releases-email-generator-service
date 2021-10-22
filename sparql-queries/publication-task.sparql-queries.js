@@ -19,11 +19,11 @@ export async function getPublicationTasksToPublish() {
     SELECT ?publicationTask ?status ?pressRelease ?title  ?graph ?htmlContent ?creatorName ?pubEvent
     WHERE {
             GRAPH ?graph {
-                ?publicationTask        a                                 ext:PublicationTask;
-                                        adms:status                       ${sparqlEscapeUri(NOT_STARTED_STATUS)};
-                                        ext:publicationChannel            ${sparqlEscapeUri(VERZENDLIJSTEN_PUBLICATION_CHANNEL)}.
+                ?publicationTask a ext:PublicationTask;
+                  adms:status ${sparqlEscapeUri(NOT_STARTED_STATUS)};
+                  ext:publicationChannel ${sparqlEscapeUri(VERZENDLIJSTEN_PUBLICATION_CHANNEL)}.
 
-                ?pubEvent               prov:generated                    ?publicationTask.
+                ?pubEvent prov:generated ?publicationTask.
 
                 ?pressRelease           ebucore:isScheduledOn             ?pubEvent;
                                         nie:htmlContent                   ?htmlContent;
@@ -58,8 +58,7 @@ export async function initializePublications(publicationTasks) {
         }
         INSERT {
             GRAPH ${sparqlEscapeUri(pubTask.graph)} {
-                ${sparqlEscapeUri(pubTask.publicationTask)}       a               ext:PublicationTask;
-                                                                  adms:status     ${sparqlEscapeUri(ONGOING_STATUS)};
+                ${sparqlEscapeUri(pubTask.publicationTask)}       adms:status     ${sparqlEscapeUri(ONGOING_STATUS)};
                                                                   dct:modified     ${sparqlEscapeDateTime(now)}.
             }
         }
