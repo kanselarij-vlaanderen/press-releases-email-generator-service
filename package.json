@@ -3,9 +3,6 @@
   "version": "0.2.0",
   "description": "",
   "main": "app.js",
-  "scripts": {
-    "test": "jest"
-  },
   "author": "redpencil.io",
   "license": "MIT",
   "type": "module",
@@ -13,14 +10,5 @@
     "@lblod/mu-auth-sudo": "^0.3.2",
     "handlebars": "^4.7.7",
     "html-minifier": "^4.0.0"
-  },
-  "devDependencies": {
-    "jest": "^27.0.6"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ]
   }
 }
