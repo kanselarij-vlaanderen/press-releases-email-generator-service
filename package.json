@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest"
   },
-  "author": "Michael <michael.vervloet@ordina.be> (https://www.ordina.be)",
+  "author": "redpencil.io",
   "license": "MIT",
   "type": "module",
   "dependencies": {
