@@ -8,6 +8,7 @@
   "type": "module",
   "dependencies": {
     "@lblod/mu-auth-sudo": "^0.3.2",
+    "date-fns": "^2.28.0",
     "handlebars": "^4.7.7",
     "html-minifier": "^4.0.0"
   }
