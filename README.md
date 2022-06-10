@@ -14,7 +14,7 @@ Add the following snippet to your `docker-compose.yml`
 ```yaml
 services:
   email-generator:
-    image: kanselarij/press-releases-email-generator-service:0.2.0
+    image: kanselarij/press-releases-email-generator-service:0.3.0
     environment:
       EMAIL_FROM: "noreply-vlivia@service.vlaanderen.be"
       EMAIL_TO: "noreply-vlivia@service.vlaanderen.be"
