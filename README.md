@@ -8,22 +8,19 @@ the triplestore.
 
 ## How to
 
-### Run the application in development mode
-
-For development, add a docker-compose.override.yml to your main project (app-persberichten), or add the following
-service to your existing docker-compose.override.yaml.
-(You might have to change the volume path to the root path of this application).
+### Add the service to your stack
+Add the following snippet to your `docker-compose.yml`
 
 ```yaml
 services:
-  press-release-email-generator:
-    image: semtech/mu-javascript-template
-    ports:
-      - <available-port-on-device>:80
+  email-generator:
+    image: kanselarij/press-releases-email-generator-service:0.2.0
     environment:
-      NODE_ENV: "development"
+      EMAIL_FROM: "noreply-vlivia@service.vlaanderen.be"
+      EMAIL_TO: "noreply-vlivia@service.vlaanderen.be"
+      IMAGE_HOST: "https://vlivia.vlaanderen.be
     volumes:
-      - ../press-release-email-generator-service/:/app/
+      - ./data/files:/share
 ```
 
 and add the following rules to the ``` config/delta/rules.js ```
@@ -40,7 +37,8 @@ and add the following rules to the ``` config/delta/rules.js ```
         },
     },
     callback: {
-        url: 'http://press-releases-email-generator/delta', method: 'POST',
+        url: 'http://email-generator/delta',
+        method: 'POST',
     },
     options: {
         resourceFormat: 'v0.0.1',
@@ -64,10 +62,11 @@ and add the following rules to the ``` config/delta/rules.js ```
 
 | Key | type | default | description |
 |-----|------|---------|-------------|
-| EMAIL_TO | string | 'noreply@vlivia.vlaanderen.be' | mailTo recipient of the email |
-| EMAIL_FROM | string | 'noreply@vlivia.vlaanderen.be' | sender of the email |
-| BATCH_SIZE | number | 50 | when an email has more than BATCH_SIZE recipients, it gets split into <amount of recipients/BATCH_SIZE> different emails to be sent to avoid spam listings |
-| OUTBOX_URI | string | 'http://themis.vlaanderen.be/id/mail-folders/71f0e467-36ef-42cd-8764-5f7c5438ebcf' | outbox uri |
+| `EMAIL_TO` | string | 'noreply@vlivia.vlaanderen.be' | mailTo recipient of the email |
+| `EMAIL_FROM` | string | 'noreply@vlivia.vlaanderen.be' | sender of the email |
+| `IMAGE_HOST` | string | 'http://localhost' | Host the images in the mail template must be served from (must be accessible to the receivers of the email) |
+| `BATCH_SIZE` | number | 50 | when an email has more than BATCH_SIZE recipients, it gets split into <amount of recipients/BATCH_SIZE> different emails to be sent to avoid spam listings |
+| `OUTBOX_URI` | string | 'http://themis.vlaanderen.be/id/mail-folders/71f0e467-36ef-42cd-8764-5f7c5438ebcf' | outbox uri |
 
 
 
