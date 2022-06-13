@@ -1,4 +1,5 @@
 import { app, errorHandler } from 'mu';
+import bodyParser from 'body-parser';
 import { getNotStartedPublicationTasks, TASK_ONGOING_STATUS } from './lib/publication-task';
 import { VERZENDLIJSTEN_PUBLICATION_CHANNEL } from './config';
 
