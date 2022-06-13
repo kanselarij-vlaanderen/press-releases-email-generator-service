@@ -1,6 +1,6 @@
 {
   "name": "press-releases-email-generator-service",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Microservice generating HTML emails for press-releases to be sent via the mail-delivery service",
   "main": "app.js",
   "author": "redpencil.io",
